@@ -356,7 +356,10 @@ void H264ImageDisplay::subscribe()
       topic_property_->getTopicStd(),
       qos,
       [this](const sensor_msgs::msg::CompressedImage::ConstSharedPtr msg) {
-        incomingMessage(msg);
+        // Call processMessage directly instead of incomingMessage to avoid
+        // base class time arithmetic that crashes when time sources differ
+        // (ROS_TIME vs SYSTEM_TIME): "can't subtract times with different time sources"
+        processMessage(msg);
       });
     setStatus(rviz_common::properties::StatusProperty::Ok, "Topic", "OK");
   } catch (rclcpp::exceptions::InvalidTopicNameError & e) {
