@@ -125,24 +125,70 @@ void H264ImageDisplay::setupScreenRectangle()
   RCLCPP_INFO(get_logger(), "Screen rectangle initialized successfully");
 }
 
-void H264ImageDisplay::initPipeline()
+void H264ImageDisplay::initPipeline(const std::string & format)
 {
-  if (pipeline_) {
+  // If pipeline exists and format matches, nothing to do
+  if (pipeline_ && format == current_format_) {
     return;
+  }
+
+  // If format changed, destroy existing pipeline first
+  if (pipeline_) {
+    RCLCPP_INFO(get_logger(), "Format changed from '%s' to '%s', recreating pipeline",
+      current_format_.c_str(), format.c_str());
+    destroyPipeline();
   }
 
   gst_init(nullptr, nullptr);
 
-  std::string pipeline_str =
-    "appsrc name=src is-live=true block=false format=3"
-    " ! h264parse"
-    " ! nvv4l2decoder enable-max-performance=true disable-dpb=true"
-    " ! nvvidconv"
-    " ! video/x-raw,format=RGBA"
-    " ! appsink name=sink max-buffers=1 drop=true sync=false emit-signals=false";
+  bool is_jpeg = (format.find("jpeg") != std::string::npos ||
+                  format.find("jpg") != std::string::npos);
+
+  std::string pipeline_str;
+  bool using_hw = false;
+
+  if (is_jpeg) {
+    // Try HW JPEG decode (nvjpegdec) first
+    pipeline_str =
+      "appsrc name=src is-live=true block=false format=3"
+      " ! jpegparse"
+      " ! nvjpegdec"
+      " ! nvvidconv"
+      " ! video/x-raw,format=RGBA"
+      " ! appsink name=sink max-buffers=1 drop=true sync=false emit-signals=false";
+    using_hw = true;
+  } else {
+    // H.264 decode (existing)
+    pipeline_str =
+      "appsrc name=src is-live=true block=false format=3"
+      " ! h264parse"
+      " ! nvv4l2decoder enable-max-performance=true disable-dpb=true"
+      " ! nvvidconv"
+      " ! video/x-raw,format=RGBA"
+      " ! appsink name=sink max-buffers=1 drop=true sync=false emit-signals=false";
+    using_hw = true;
+  }
 
   GError * error = nullptr;
   pipeline_ = gst_parse_launch(pipeline_str.c_str(), &error);
+
+  // Fallback to SW decoder if HW pipeline failed
+  if ((!pipeline_ || error) && is_jpeg) {
+    if (error) { g_error_free(error); error = nullptr; }
+    if (pipeline_) { gst_object_unref(pipeline_); pipeline_ = nullptr; }
+
+    RCLCPP_WARN(get_logger(), "HW JPEG decode unavailable, falling back to SW jpegdec");
+    pipeline_str =
+      "appsrc name=src is-live=true block=false format=3"
+      " ! jpegparse"
+      " ! jpegdec"
+      " ! videoconvert"
+      " ! video/x-raw,format=RGBA"
+      " ! appsink name=sink max-buffers=1 drop=true sync=false emit-signals=false";
+    using_hw = false;
+    pipeline_ = gst_parse_launch(pipeline_str.c_str(), &error);
+  }
+
   if (!pipeline_ || error) {
     std::string err_msg = error ? error->message : "unknown error";
     if (error) {
@@ -169,12 +215,17 @@ void H264ImageDisplay::initPipeline()
     return;
   }
 
-  // Set appsrc caps
-  GstCaps * caps = gst_caps_new_simple(
-    "video/x-h264",
-    "stream-format", G_TYPE_STRING, "byte-stream",
-    "alignment", G_TYPE_STRING, "au",
-    nullptr);
+  // Set appsrc caps based on format
+  GstCaps * caps = nullptr;
+  if (is_jpeg) {
+    caps = gst_caps_new_empty_simple("image/jpeg");
+  } else {
+    caps = gst_caps_new_simple(
+      "video/x-h264",
+      "stream-format", G_TYPE_STRING, "byte-stream",
+      "alignment", G_TYPE_STRING, "au",
+      nullptr);
+  }
   gst_app_src_set_caps(GST_APP_SRC(appsrc_), caps);
   gst_caps_unref(caps);
 
@@ -225,11 +276,14 @@ void H264ImageDisplay::initPipeline()
   // Set pipeline to PLAYING
   gst_element_set_state(pipeline_, GST_STATE_PLAYING);
   pipeline_ready_ = true;
+  current_format_ = format;
 
+  RCLCPP_INFO(get_logger(), "Pipeline ready: format=%s, decoder=%s",
+    format.c_str(), (is_jpeg ? (using_hw ? "nvjpegdec (HW)" : "jpegdec (SW)") : "nvv4l2decoder (HW)"));
   setStatus(
     rviz_common::properties::StatusProperty::Ok,
     "GStreamer",
-    "Pipeline running");
+    QString::fromStdString("Pipeline running (" + format + ")"));
 }
 
 void H264ImageDisplay::destroyPipeline()
@@ -378,7 +432,7 @@ void H264ImageDisplay::unsubscribe()
 
 void H264ImageDisplay::onEnable()
 {
-  initPipeline();
+  // Pipeline will be initialized on first message (format auto-detect)
   subscribe();
 }
 
@@ -391,11 +445,28 @@ void H264ImageDisplay::onDisable()
 void H264ImageDisplay::processMessage(
   sensor_msgs::msg::CompressedImage::ConstSharedPtr msg)
 {
-  if (!pipeline_ready_ || !appsrc_) {
-    // Try to init pipeline if not yet ready
-    if (!pipeline_) {
-      initPipeline();
-    }
+  if (msg->data.empty()) {
+    return;
+  }
+
+  const std::string & format = msg->format;
+
+  // Validate format: accept jpeg or h264
+  bool is_jpeg = (format.find("jpeg") != std::string::npos ||
+                  format.find("jpg") != std::string::npos);
+  bool is_h264 = (format.find("h264") != std::string::npos);
+
+  if (!is_jpeg && !is_h264) {
+    setStatus(
+      rviz_common::properties::StatusProperty::Warn,
+      "Format",
+      QString::fromStdString("Unsupported format: " + format + " (expected jpeg or h264)"));
+    return;
+  }
+
+  // Initialize or reinitialize pipeline based on format
+  if (!pipeline_ready_ || format != current_format_) {
+    initPipeline(format);
     if (!pipeline_ready_) {
       return;
     }
@@ -403,19 +474,7 @@ void H264ImageDisplay::processMessage(
 
   RCLCPP_INFO_ONCE(get_logger(),
     "processMessage: first message received, format='%s', size=%zu",
-    msg->format.c_str(), msg->data.size());
-
-  if (msg->format.find("h264") == std::string::npos) {
-    setStatus(
-      rviz_common::properties::StatusProperty::Warn,
-      "Format",
-      QString::fromStdString("Unexpected format: " + msg->format + " (expected h264)"));
-    return;
-  }
-
-  if (msg->data.empty()) {
-    return;
-  }
+    format.c_str(), msg->data.size());
 
   // Create GstBuffer and push into appsrc
   GstBuffer * buffer = gst_buffer_new_allocate(nullptr, msg->data.size(), nullptr);

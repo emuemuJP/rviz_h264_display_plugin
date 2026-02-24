@@ -56,7 +56,7 @@ protected:
   void onDisable() override;
 
 private:
-  void initPipeline();
+  void initPipeline(const std::string & format);
   void destroyPipeline();
   void decodeThread();
   void setupScreenRectangle();
@@ -69,6 +69,7 @@ private:
   std::thread decode_thread_;
   std::atomic<bool> stop_{false};
   std::atomic<bool> pipeline_ready_{false};
+  std::string current_format_;
 
   // Decoded frame buffer (decode thread -> render thread)
   std::mutex frame_mutex_;
