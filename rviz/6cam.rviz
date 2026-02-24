@@ -42,9 +42,9 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Class: rviz_h264_display/H264Image
+    - Class: rviz_compressed_display/CompressedImage
       Enabled: true
-      Name: H264Image
+      Name: CompressedImage
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -52,9 +52,9 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /cam0/h264
       Value: true
-    - Class: rviz_h264_display/H264Image
+    - Class: rviz_compressed_display/CompressedImage
       Enabled: true
-      Name: H264Image
+      Name: CompressedImage
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -62,9 +62,9 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /cam1/h264
       Value: true
-    - Class: rviz_h264_display/H264Image
+    - Class: rviz_compressed_display/CompressedImage
       Enabled: true
-      Name: H264Image
+      Name: CompressedImage
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -72,9 +72,9 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /cam2/h264
       Value: true
-    - Class: rviz_h264_display/H264Image
+    - Class: rviz_compressed_display/CompressedImage
       Enabled: true
-      Name: H264Image
+      Name: CompressedImage
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -82,9 +82,9 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /cam3/h264
       Value: true
-    - Class: rviz_h264_display/H264Image
+    - Class: rviz_compressed_display/CompressedImage
       Enabled: true
-      Name: H264Image
+      Name: CompressedImage
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -92,9 +92,9 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /cam4/h264
       Value: true
-    - Class: rviz_h264_display/H264Image
+    - Class: rviz_compressed_display/CompressedImage
       Enabled: true
-      Name: H264Image
+      Name: CompressedImage
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -168,7 +168,7 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: false
-  H264Image:
+  CompressedImage:
     collapsed: false
   Height: 1813
   Hide Left Dock: false

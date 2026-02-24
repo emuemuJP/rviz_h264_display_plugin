@@ -1,11 +1,11 @@
-<library path="rviz_h264_display">
+<library path="rviz_compressed_display">
   <class
-    name="rviz_h264_display/H264Image"
-    type="rviz_h264_display::H264ImageDisplay"
+    name="rviz_compressed_display/CompressedImage"
+    type="rviz_compressed_display::CompressedImageDisplay"
     base_class_type="rviz_common::Display"
   >
     <description>
-      Displays H.264 compressed images using NVIDIA hardware decoder.
+      Displays compressed images (JPEG/H.264) using hardware decoder.
     </description>
     <message_type>sensor_msgs/msg/CompressedImage</message_type>
   </class>

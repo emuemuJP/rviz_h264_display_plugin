@@ -1,4 +1,4 @@
-#include "rviz_h264_display/h264_image_display.hpp"
+#include "rviz_compressed_display/compressed_image_display.hpp"
 
 #include <algorithm>
 #include <string>
@@ -22,19 +22,19 @@
 
 static rclcpp::Logger get_logger()
 {
-  return rclcpp::get_logger("rviz_h264_display");
+  return rclcpp::get_logger("rviz_compressed_display");
 }
 
-namespace rviz_h264_display
+namespace rviz_compressed_display
 {
 
-int H264ImageDisplay::instance_count_ = 0;
+int CompressedImageDisplay::instance_count_ = 0;
 
-H264ImageDisplay::H264ImageDisplay()
+CompressedImageDisplay::CompressedImageDisplay()
 {
 }
 
-H264ImageDisplay::~H264ImageDisplay()
+CompressedImageDisplay::~CompressedImageDisplay()
 {
   destroyPipeline();
 
@@ -50,13 +50,13 @@ H264ImageDisplay::~H264ImageDisplay()
   }
 }
 
-void H264ImageDisplay::onInitialize()
+void CompressedImageDisplay::onInitialize()
 {
   rviz_common::RosTopicDisplay<sensor_msgs::msg::CompressedImage>::onInitialize();
 
   instance_count_++;
-  std::string mat_name = "H264ImageMaterial_" + std::to_string(instance_count_);
-  std::string tex_name = "H264ImageTexture_" + std::to_string(instance_count_);
+  std::string mat_name = "CompressedImageMaterial_" + std::to_string(instance_count_);
+  std::string tex_name = "CompressedImageTexture_" + std::to_string(instance_count_);
 
   // Create a default 8x8 texture
   texture_ = Ogre::TextureManager::getSingleton().createManual(
@@ -83,7 +83,7 @@ void H264ImageDisplay::onInitialize()
   setupScreenRectangle();
 }
 
-void H264ImageDisplay::setupRenderPanel()
+void CompressedImageDisplay::setupRenderPanel()
 {
   render_panel_ = std::make_unique<rviz_common::RenderPanel>();
   render_panel_->resize(640, 480);
@@ -91,7 +91,7 @@ void H264ImageDisplay::setupRenderPanel()
   setAssociatedWidget(render_panel_.get());
 }
 
-void H264ImageDisplay::setupScreenRectangle()
+void CompressedImageDisplay::setupScreenRectangle()
 {
   if (screen_rect_initialized_) {
     return;
@@ -125,7 +125,7 @@ void H264ImageDisplay::setupScreenRectangle()
   RCLCPP_INFO(get_logger(), "Screen rectangle initialized successfully");
 }
 
-void H264ImageDisplay::initPipeline(const std::string & format)
+void CompressedImageDisplay::initPipeline(const std::string & format)
 {
   // If pipeline exists and format matches, nothing to do
   if (pipeline_ && format == current_format_) {
@@ -271,7 +271,7 @@ void H264ImageDisplay::initPipeline(const std::string & format)
 
   // Start decode thread
   stop_ = false;
-  decode_thread_ = std::thread(&H264ImageDisplay::decodeThread, this);
+  decode_thread_ = std::thread(&CompressedImageDisplay::decodeThread, this);
 
   // Set pipeline to PLAYING
   gst_element_set_state(pipeline_, GST_STATE_PLAYING);
@@ -286,7 +286,7 @@ void H264ImageDisplay::initPipeline(const std::string & format)
     QString::fromStdString("Pipeline running (" + format + ")"));
 }
 
-void H264ImageDisplay::destroyPipeline()
+void CompressedImageDisplay::destroyPipeline()
 {
   pipeline_ready_ = false;
 
@@ -321,7 +321,7 @@ void H264ImageDisplay::destroyPipeline()
   new_frame_ = false;
 }
 
-void H264ImageDisplay::decodeThread()
+void CompressedImageDisplay::decodeThread()
 {
   bool first_frame = true;
   RCLCPP_INFO(get_logger(), "Decode thread started");
@@ -384,7 +384,7 @@ void H264ImageDisplay::decodeThread()
   }
 }
 
-void H264ImageDisplay::subscribe()
+void CompressedImageDisplay::subscribe()
 {
   if (!isEnabled()) {
     return;
@@ -424,25 +424,25 @@ void H264ImageDisplay::subscribe()
   }
 }
 
-void H264ImageDisplay::unsubscribe()
+void CompressedImageDisplay::unsubscribe()
 {
   rviz_common::RosTopicDisplay<sensor_msgs::msg::CompressedImage>::unsubscribe();
   destroyPipeline();
 }
 
-void H264ImageDisplay::onEnable()
+void CompressedImageDisplay::onEnable()
 {
   // Pipeline will be initialized on first message (format auto-detect)
   subscribe();
 }
 
-void H264ImageDisplay::onDisable()
+void CompressedImageDisplay::onDisable()
 {
   unsubscribe();
   reset();
 }
 
-void H264ImageDisplay::processMessage(
+void CompressedImageDisplay::processMessage(
   sensor_msgs::msg::CompressedImage::ConstSharedPtr msg)
 {
   if (msg->data.empty()) {
@@ -490,7 +490,7 @@ void H264ImageDisplay::processMessage(
   }
 }
 
-void H264ImageDisplay::update(float wall_dt, float ros_dt)
+void CompressedImageDisplay::update(float wall_dt, float ros_dt)
 {
   (void)wall_dt;
   (void)ros_dt;
@@ -558,12 +558,12 @@ void H264ImageDisplay::update(float wall_dt, float ros_dt)
   render_panel_->update();
 }
 
-void H264ImageDisplay::reset()
+void CompressedImageDisplay::reset()
 {
   rviz_common::RosTopicDisplay<sensor_msgs::msg::CompressedImage>::reset();
   destroyPipeline();
 }
 
-}  // namespace rviz_h264_display
+}  // namespace rviz_compressed_display
 
-PLUGINLIB_EXPORT_CLASS(rviz_h264_display::H264ImageDisplay, rviz_common::Display)
+PLUGINLIB_EXPORT_CLASS(rviz_compressed_display::CompressedImageDisplay, rviz_common::Display)

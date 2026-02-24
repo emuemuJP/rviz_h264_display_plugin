@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(rviz_h264_display)
+project(rviz_compressed_display)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
@@ -31,8 +31,8 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} SHARED
-  include/rviz_h264_display/h264_image_display.hpp
-  src/h264_image_display.cpp
+  include/rviz_compressed_display/compressed_image_display.hpp
+  src/compressed_image_display.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}

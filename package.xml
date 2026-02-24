@@ -2,12 +2,12 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd"
             schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>rviz_h264_display</name>
+  <name>rviz_compressed_display</name>
   <version>0.1.0</version>
   <description>
-    RViz2 display plugin for H.264 compressed images.
-    Decodes H.264 CompressedImage using NVIDIA hardware decoder (nvv4l2decoder)
-    and renders directly in RViz without intermediate Image topic publishing.
+    RViz2 display plugin for compressed images (JPEG/H.264).
+    Decodes CompressedImage using NVIDIA hardware decoder and renders
+    directly in RViz without intermediate Image topic publishing.
   </description>
 
   <maintainer email="todo@todo.com">TODO</maintainer>

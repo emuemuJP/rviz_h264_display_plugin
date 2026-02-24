@@ -1,5 +1,5 @@
-#ifndef RVIZ_H264_DISPLAY__H264_IMAGE_DISPLAY_HPP_
-#define RVIZ_H264_DISPLAY__H264_IMAGE_DISPLAY_HPP_
+#ifndef RVIZ_COMPRESSED_DISPLAY__COMPRESSED_IMAGE_DISPLAY_HPP_
+#define RVIZ_COMPRESSED_DISPLAY__COMPRESSED_IMAGE_DISPLAY_HPP_
 
 #ifndef Q_MOC_RUN
 
@@ -32,17 +32,17 @@ namespace Ogre
 class Rectangle2D;
 }
 
-namespace rviz_h264_display
+namespace rviz_compressed_display
 {
 
-class H264ImageDisplay
+class CompressedImageDisplay
   : public rviz_common::RosTopicDisplay<sensor_msgs::msg::CompressedImage>
 {
   Q_OBJECT
 
 public:
-  H264ImageDisplay();
-  ~H264ImageDisplay() override;
+  CompressedImageDisplay();
+  ~CompressedImageDisplay() override;
 
   void onInitialize() override;
   void update(float wall_dt, float ros_dt) override;
@@ -88,6 +88,6 @@ private:
   static int instance_count_;
 };
 
-}  // namespace rviz_h264_display
+}  // namespace rviz_compressed_display
 
-#endif  // RVIZ_H264_DISPLAY__H264_IMAGE_DISPLAY_HPP_
+#endif  // RVIZ_COMPRESSED_DISPLAY__COMPRESSED_IMAGE_DISPLAY_HPP_
